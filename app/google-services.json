@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "733181733966",
+    "firebase_url": "https://fir-chat-c3a3a.firebaseio.com",
+    "project_id": "fir-chat-c3a3a",
+    "storage_bucket": "fir-chat-c3a3a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733181733966:android:7b241acbbf63d8fc50a71f",
+        "android_client_info": {
+          "package_name": "bokhakwang.softwareengineering"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "733181733966-m371i33q9sk41lf3thu7uu0koti4o97v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bokhakwang.softwareengineering",
+            "certificate_hash": "3545ceaa34da397e856b8e4d20968ca5463adb34"
+          }
+        },
+        {
+          "client_id": "733181733966-r8c5kn4m5dj1ij4nfrcdrr14t4h35a15.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSPaJqyoYDxhPmJTQvJDJdqS8S-zWpnPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "733181733966-r8c5kn4m5dj1ij4nfrcdrr14t4h35a15.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

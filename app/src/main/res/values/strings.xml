@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">SoftwareEngineering</string>
+
+    <string name="google_maps_key">AIzaSyC8ePJxpRY9EoDsGj_wIdFeRGruJBPYs1s</string>
+
+    <string name="title_home">Home</string>
+    <string name="title_map">Map</string>
+    <string name="menu_search">Search</string>
+
+    <string name="auth_fine_location">Locaion permission is required</string>
+    <string name="auth_write_external_storage">External storage permission is required</string>
+
+    <string name="toast_wrong_password">Invalid password</string>
+    <string name="toast_post_deleted">Post is deleted</string>
+    <string name="toast_fail_loading_address">The address does not exist</string>
+    <string name="toast_fill_in_items">Please fill in all items</string>
+</resources>
