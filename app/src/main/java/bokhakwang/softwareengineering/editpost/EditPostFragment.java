@@ -37,7 +37,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.storage.FirebaseStorage;
@@ -49,6 +52,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
 import bokhakwang.softwareengineering.MainActivity;
 import bokhakwang.softwareengineering.MapFragment;
@@ -85,29 +89,30 @@ public class EditPostFragment extends Fragment {
     private LocationManager locationManager;
 
     public static int REQUEST_CODE = 1000;
+    private String flag;
+    private String fireStorageUrl;
+    private String post_id;
+    private Post post;
 
     private LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-            post_geoPoint = geoPoint;
-            List<Address> mAddressList = getAddress(geoPoint);
-            post_detail_location = mAddressList.get(0).getAddressLine(0);
+           Toast.makeText(getContext(),"onLocationChanged",Toast.LENGTH_SHORT);
         }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-
+            Toast.makeText(getContext(),"onStatusChanged",Toast.LENGTH_SHORT);
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-
+            Toast.makeText(getContext(),"onProviderEnabled",Toast.LENGTH_SHORT);
         }
 
         @Override
         public void onProviderDisabled(String provider) {
-
+            Toast.makeText(getContext(),"onProviderDisabled",Toast.LENGTH_SHORT);
         }
     };
 
@@ -134,6 +139,7 @@ public class EditPostFragment extends Fragment {
         Log.d("MYTAG", "startLocationUpdates");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                //권한 승인 안함
 
                 return;
             }
@@ -142,7 +148,7 @@ public class EditPostFragment extends Fragment {
         locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 3000,
-                10,
+                5,
                 mLocationListener
         );
     }
@@ -161,6 +167,7 @@ public class EditPostFragment extends Fragment {
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
 
         mDistrictSpinnerAdapter = new MapFragment.DistrictSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item);
@@ -168,7 +175,6 @@ public class EditPostFragment extends Fragment {
 
         mDistrictSpinnerAdapter.clear();
         mDistrictSpinnerAdapter.addAll(mMapModel.getDistrictList());
-        super.onCreate(savedInstanceState);
     }
 
     @Nullable
@@ -188,14 +194,20 @@ public class EditPostFragment extends Fragment {
         mProgressBar = v.findViewById(R.id.edit_progressbar);
 
         if(getArguments() != null) {
-            Post post = (Post) getArguments().getSerializable("post");
-            Glide.with(getContext()).load(post.getImages().get(0)).into(mPostPicture);
+            flag = "update";
+            post = (Post) getArguments().getSerializable("post");
+
+            post_id = post.getId();
+            fireStorageUrl = post.getImages().get(0);
+            Glide.with(getContext()).load(fireStorageUrl).into(mPostPicture);
+
             mLocation.setText(post.getDetail_location());
             mAuthor.setText(post.getAuthor());
             mContents.setText(post.getContents());
             mPassword.setText(post.getPassword());
 
         } else {
+            flag = "add";
             mDistrictSpinner.setSelection(0, false);
             mDistrictSpinner.setAdapter(mDistrictSpinnerAdapter);
             post_distrcit = mDistrictSpinnerAdapter.getItem(0).getName();
@@ -227,7 +239,8 @@ public class EditPostFragment extends Fragment {
             if (chkGpsService()) {
                 GeoPoint geoPoint = getCurrentLocation();
 
-                if (geoPoint.getLatitude() == 0 && geoPoint.getLongitude() == 0) {
+                if(geoPoint == null) {
+                //if (geoPoint.getLatitude() == 0 && geoPoint.getLongitude() == 0) {
                     Toast.makeText(getContext(), R.string.toast_fail_loading_address, Toast.LENGTH_SHORT).show();
 
                 } else {
@@ -250,7 +263,10 @@ public class EditPostFragment extends Fragment {
 
         post_pictureUri = null;
         mSaveBtn.setOnClickListener(__ -> {
-            if (post_pictureUri == null || mAuthor.getText().toString().trim().equals("") || mLocation.getText().toString().trim().equals("") || mContents.getText().toString().equals("") || mPassword.getText().toString().trim().equals("")) {
+            if (flag.equals("add") && post_pictureUri == null || mAuthor.getText().toString().trim().equals("") || mLocation.getText().toString().trim().equals("") || mContents.getText().toString().equals("") || mPassword.getText().toString().trim().equals("")) {
+                Toast.makeText(getContext(), R.string.toast_fill_in_items, Toast.LENGTH_SHORT).show();
+
+            } else if(flag.equals("update") && mAuthor.getText().toString().trim().equals("") || mLocation.getText().toString().trim().equals("") || mContents.getText().toString().equals("") || mPassword.getText().toString().trim().equals("")) {
                 Toast.makeText(getContext(), R.string.toast_fill_in_items, Toast.LENGTH_SHORT).show();
 
             } else {
@@ -259,12 +275,82 @@ public class EditPostFragment extends Fragment {
                 post_author = mAuthor.getText().toString().trim();
                 post_contents = mContents.getText().toString().trim();
                 post_password = mPassword.getText().toString().trim();
-                savePost(post_pictureUri, post_author, post_geoPoint, post_distrcit, post_detail_location, post_contents, post_password);
+
+                if(flag.equals("add")) {
+                    Log.d("MYTAG", "add에서 저장버튼 누름");
+                    savePost(post_pictureUri, post_author, post_geoPoint, post_distrcit, post_detail_location, post_contents, post_password);
+                } else if(flag.equals("update")) {
+                    Log.d("MYTAG", "update에서 저장버튼 누름");
+                    updatePost(post, post_pictureUri, post_author, post_geoPoint, post_distrcit, post_detail_location, post_contents, post_password);
+                }
 
             }
         });
 
         return v;
+    }
+
+    public void updatePost(Post post, Uri pictureUri, String author, GeoPoint geoPoint, String distrcit, String detail_location, String contents, String password) {
+        mProgressBar.setVisibility(View.VISIBLE);
+        Firestore firestore = Firestore.getInstance();
+
+        List<Uri> uriList = new ArrayList<>();
+
+        if(pictureUri != null) { //사진 변경
+            uriList.add(pictureUri);
+            FireStorage.getInstance().deleteImage(post.getImages().get(0));
+
+            FireStorage.getInstance().uploadImages(uriList, storageResult -> {
+                List<String> pictureList = storageResult;
+                //String time = getCurrentTime();
+
+                post.setImages(pictureList);
+                //post.setTime(time);
+                post.setAuthor(author);
+                post.setLatLng(geoPoint);
+                post.setDistrict(distrcit);
+                post.setDetail_location(detail_location);
+                post.setContents(contents);
+                post.setPassword(password);
+
+
+                firestore.updatePost(post, res -> {
+                    if(res) {
+                        mProgressBar.setVisibility(View.GONE);
+                        Intent intent = new Intent();
+                        intent.putExtra("updatePost", post);
+                        getActivity().setResult(Activity.RESULT_OK, intent);
+                        getActivity().finish();
+                    } else {
+                        //업데이트 실패
+                    }
+                });
+            });
+        } else { //사진은 변경안함
+            //String time = getCurrentTime();
+            //post.setTime(time);
+
+            post.setAuthor(author);
+            post.setLatLng(geoPoint);
+            post.setDistrict(distrcit);
+            post.setDetail_location(detail_location);
+            post.setContents(contents);
+            post.setPassword(password);
+
+            firestore.updatePost(post, res-> {
+                if(res) {
+                    mProgressBar.setVisibility(View.GONE);
+                    Intent intent = new Intent();
+                    intent.putExtra("updatePost", post);
+                    getActivity().setResult(Activity.RESULT_OK, intent);
+                    getActivity().finish();
+                } else {
+                    //업데이트 실패
+                }
+            });
+        }
+
+
     }
 
     public void savePost(Uri pictureUri, String author, GeoPoint geoPoint, String distrcit, String detail_location, String contents, String password) {
@@ -283,7 +369,7 @@ public class EditPostFragment extends Fragment {
             firestore.addNewPost(post, res -> {
                 if(res) {
                     mProgressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Post was saved", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getContext(), "Post was saved", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent();
                     intent.putExtra("addPost", post);
                     getActivity().setResult(Activity.RESULT_OK, intent);
@@ -354,13 +440,14 @@ public class EditPostFragment extends Fragment {
 
     private GeoPoint getCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
             return geoPoint;
 
-        } else {
-            return new GeoPoint(0, 0);
         }
+
+        return null;
     }
 
     private boolean chkGpsService() {

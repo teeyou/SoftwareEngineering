@@ -48,8 +48,8 @@ public class EditPostActivity extends AppCompatActivity {
                 Post post = (Post) getIntent().getSerializableExtra("post");
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, EditPostFragment.newInstance(post)).commit();
             }
+        } else {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new EditPostFragment()).commit();
         }
-
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new EditPostFragment()).commit();
     }
 }

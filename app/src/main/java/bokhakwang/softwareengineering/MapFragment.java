@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.firestore.GeoPoint;
 
+import java.io.Serializable;
 import java.util.List;
 
 import bokhakwang.softwareengineering.data.source.Repository;
@@ -67,6 +68,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         // Required empty public constructor
     }
 
+    public static MapFragment newInstance(List<Post> postList) {
+        MapFragment fragment = new MapFragment();
+        Bundle args = new Bundle();
+        args.putSerializable("postList", (Serializable) postList);
+        fragment.setArguments(args);
+
+        return fragment;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,19 +86,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mDistrictSpinnerAdapter.clear();
         mDistrictSpinnerAdapter.addAll(mMapModel.getDistrictList());
 
-        mPostList = Repository.getRepo(getContext()).getPostList();
+        mPostList = (List<Post>) getArguments().getSerializable("postList");
+        //mPostList = Repository.getRepo(getContext()).getPostList();
     }
 
-    private void fetchPosts() {
-        Repository.getRepo(getContext()).fetchPostList(res -> {
-            if(res) {
-                mPostList = Repository.getRepo(getContext()).getPostList();
-                mMapFragment.getMapAsync(this);
-            } else {
-
-            }
-        });
-    }
+//    private void fetchPosts() {
+//        Repository.getRepo(getContext()).fetchPostList(res -> {
+//            if(res) {
+//                mPostList = Repository.getRepo(getContext()).getPostList();
+//                mMapFragment.getMapAsync(this);
+//            } else {
+//
+//            }
+//        });
+//    }
 
     @Override
     public void onStart() {

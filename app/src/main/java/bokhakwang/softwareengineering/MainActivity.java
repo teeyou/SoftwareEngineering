@@ -4,16 +4,30 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bokhakwang.softwareengineering.data.source.Repository;
+import bokhakwang.softwareengineering.model.Post;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1000;
@@ -23,6 +37,11 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout mCurrVisibleLayout;
     private MapFragment mMapFragment;
     private HomeFragment mHomeFragment;
+
+    private Repository mRepository;
+    private List<Post> mPostList;
+
+    private ProgressBar mProgressBar;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -45,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         if (!fragment.isAdded()) {
             getSupportFragmentManager().beginTransaction().add(layoutId, fragment).commit();
         }
+
         mCurrVisibleLayout.setVisibility(View.GONE);
         frameLayout.setVisibility(View.VISIBLE);
         mCurrVisibleLayout = frameLayout;
@@ -70,7 +90,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d("MYTAG", "MainActivity에서 onStart");
+
+        mRepository.fetchPostList(res -> {
+            if (res) {
+                mProgressBar.setVisibility(View.INVISIBLE);
+                mPostList = mRepository.getPostList();
+
+                //mHomeFragment = HomeFragment.newInstance(mPostList);
+                //mMapFragment = MapFragment.newInstance(mPostList);
+            }
+        });
+
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("MYTAG", "MainActivity에서 onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -78,17 +116,30 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
         }
 
-        mHomeFragment = new HomeFragment();
-        mMapFragment = new MapFragment();
+        mProgressBar = findViewById(R.id.progressbar);
+        mRepository = Repository.getRepo(getApplicationContext());
+        mPostList = new ArrayList<>();
 
-        mHomeLayout = findViewById(R.id.fragment_home);
-        mMapLayout = findViewById(R.id.fragment_map);
+        mProgressBar.setVisibility(View.VISIBLE);
+        mRepository.fetchPostList(res -> {
+            if(res) {
+                mProgressBar.setVisibility(View.INVISIBLE);
+                mPostList = mRepository.getPostList();
 
-        mCurrVisibleLayout = mHomeLayout;
+                mHomeLayout = findViewById(R.id.fragment_home);
+                mMapLayout = findViewById(R.id.fragment_map);
 
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_home, mHomeFragment).commit();
+                mCurrVisibleLayout = mHomeLayout;
 
-        BottomNavigationView navigation = findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+                mHomeFragment = HomeFragment.newInstance(mPostList);
+                mMapFragment = MapFragment.newInstance(mPostList);
+
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_home, mHomeFragment).commit();
+
+                BottomNavigationView navigation = findViewById(R.id.navigation);
+                navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+            }
+        });
+
     }
 }
