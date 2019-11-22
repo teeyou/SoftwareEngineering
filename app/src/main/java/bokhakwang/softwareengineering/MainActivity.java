@@ -66,6 +66,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mCurrVisibleLayout.setVisibility(View.GONE);
+
+        if(fragment.equals(mHomeFragment)) {
+            getSupportFragmentManager().beginTransaction().remove(mMapFragment).commit();
+            Log.d("MYTAG", "remove mMapFragment");
+        } else if(fragment.equals(mMapFragment)) {
+            getSupportFragmentManager().beginTransaction().remove(mHomeFragment).commit();
+            Log.d("MYTAG", "remove mHomeFragment");
+        }
+
         frameLayout.setVisibility(View.VISIBLE);
         mCurrVisibleLayout = frameLayout;
     }
@@ -94,16 +103,12 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         Log.d("MYTAG", "MainActivity에서 onStart");
 
-        mRepository.fetchPostList(res -> {
-            if (res) {
-                mProgressBar.setVisibility(View.INVISIBLE);
-                mPostList = mRepository.getPostList();
-
-                //mHomeFragment = HomeFragment.newInstance(mPostList);
-                //mMapFragment = MapFragment.newInstance(mPostList);
-            }
-        });
-
+//        mRepository.fetchPostList(res -> {
+//            if (res) {
+//                mProgressBar.setVisibility(View.INVISIBLE);
+//                mPostList = mRepository.getPostList();
+//            }
+//        });
     }
 
     @Override
@@ -117,29 +122,44 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mProgressBar = findViewById(R.id.progressbar);
-        mRepository = Repository.getRepo(getApplicationContext());
-        mPostList = new ArrayList<>();
+        mHomeLayout = findViewById(R.id.fragment_home);
+        mMapLayout = findViewById(R.id.fragment_map);
 
-        mProgressBar.setVisibility(View.VISIBLE);
-        mRepository.fetchPostList(res -> {
-            if(res) {
-                mProgressBar.setVisibility(View.INVISIBLE);
-                mPostList = mRepository.getPostList();
+        //mRepository = Repository.getRepo(getApplicationContext());
+        //mPostList = new ArrayList<>();
 
-                mHomeLayout = findViewById(R.id.fragment_home);
-                mMapLayout = findViewById(R.id.fragment_map);
+        //mProgressBar.setVisibility(View.VISIBLE);
 
-                mCurrVisibleLayout = mHomeLayout;
 
-                mHomeFragment = HomeFragment.newInstance(mPostList);
-                mMapFragment = MapFragment.newInstance(mPostList);
+        mCurrVisibleLayout = mHomeLayout;
 
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_home, mHomeFragment).commit();
+        mHomeFragment = new HomeFragment();
+        mMapFragment = new MapFragment();
 
-                BottomNavigationView navigation = findViewById(R.id.navigation);
-                navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-            }
-        });
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_home, mHomeFragment).commit();
+
+        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+//        mRepository.fetchPostList(res -> {
+//            if(res) {
+//                mProgressBar.setVisibility(View.INVISIBLE);
+//                mPostList = mRepository.getPostList();
+//
+//                mHomeLayout = findViewById(R.id.fragment_home);
+//                mMapLayout = findViewById(R.id.fragment_map);
+//
+//                mCurrVisibleLayout = mHomeLayout;
+//
+//                mHomeFragment = HomeFragment.newInstance(mPostList);
+//                mMapFragment = MapFragment.newInstance(mPostList);
+//
+//                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_home, mHomeFragment).commit();
+//
+//                BottomNavigationView navigation = findViewById(R.id.navigation);
+//                navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+//            }
+//        });
 
     }
 }

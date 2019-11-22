@@ -1,6 +1,10 @@
 package bokhakwang.softwareengineering;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,6 +20,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -57,6 +62,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private TextView mLocation;
     private TextView mContents;
 
+    private ProgressBar mProgressBar;
     public static final CameraPosition SEOUL =
             new CameraPosition.Builder().target(new LatLng(37.5649533f, 126.9811368f))
                     .zoom(11)
@@ -86,8 +92,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mDistrictSpinnerAdapter.clear();
         mDistrictSpinnerAdapter.addAll(mMapModel.getDistrictList());
 
-        mPostList = (List<Post>) getArguments().getSerializable("postList");
-        //mPostList = Repository.getRepo(getContext()).getPostList();
+        //mPostList = (List<Post>) getArguments().getSerializable("postList");
+
+
     }
 
 //    private void fetchPosts() {
@@ -101,12 +108,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 //        });
 //    }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -114,7 +115,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         View v = inflater.inflate(R.layout.fragment_map, container, false);
 
         mMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
-        mMapFragment.getMapAsync(this);
 
         LinearLayout linearLayout = v.findViewById(R.id.bottom_sheet_layout);
         mBottomSheetBehavior = BottomSheetBehavior.from(linearLayout);
@@ -124,6 +124,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mAuthor = v.findViewById(R.id.bottom_sheet_author);
         mLocation = v.findViewById(R.id.bottom_sheet_location);
         mContents = v.findViewById(R.id.bottom_sheet_contents);
+        mProgressBar = v.findViewById(R.id.map_progressbar);
+
+        mMapFragment.getMapAsync(this);
 
         mDistrictSpinner = v.findViewById(R.id.district_spinner);
         mDistrictSpinner.setAdapter(mDistrictSpinnerAdapter);
@@ -153,22 +156,54 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Log.d("MYTAG", "onMapReady");
+        GeoPoint currentLocation = getCurrentLocation();
+        CameraPosition position =
+                new CameraPosition.Builder().target(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()))
+                        .zoom(11)
+                        .bearing(0)
+                        .tilt(0)
+                        .build();
+
         mMap = googleMap;
-        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(SEOUL));
+        //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(SEOUL));
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
 
-        if(mPostList != null) {
-            for(Post post : mPostList) {
-                MarkerOptions markerOptions = new MarkerOptions();
-                GeoPoint geoPoint = post.getLatLng();
-                LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
-                COORDINATE_OFFSET += COORDINATE_OFFSET;
-                markerOptions.position(latLng)
-                        .title(post.getAuthor())
-                        .snippet(post.getContents());
+        mProgressBar.setVisibility(View.VISIBLE);
+        Repository.getRepo(getContext()).fetchPostList(result -> {
+            if(result) {
+                mProgressBar.setVisibility(View.INVISIBLE);
+                mPostList = Repository.getRepo(getContext()).getPostList();
 
-                mMap.addMarker(markerOptions);
+                for(Post post : mPostList) {
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    GeoPoint geoPoint = post.getLatLng();
+                    LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+                    COORDINATE_OFFSET += COORDINATE_OFFSET;
+                    markerOptions.position(latLng)
+                            .title(post.getAuthor())
+                            .snippet(post.getContents());
+
+                    mMap.addMarker(markerOptions);
+                }
+
+            } else {
+                Log.d("MYTAG", "MapFragment에서... fetch 실패");
             }
-        }
+        });
+
+//        if(mPostList != null) {
+//            for(Post post : mPostList) {
+//                MarkerOptions markerOptions = new MarkerOptions();
+//                GeoPoint geoPoint = post.getLatLng();
+//                LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+//                COORDINATE_OFFSET += COORDINATE_OFFSET;
+//                markerOptions.position(latLng)
+//                        .title(post.getAuthor())
+//                        .snippet(post.getContents());
+//
+//                mMap.addMarker(markerOptions);
+//            }
+//        }
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -195,6 +230,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
     }
+
+    private GeoPoint getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+            return geoPoint;
+        }
+
+        return null;
+    }
+
+
 
     public static class DistrictSpinnerAdapter extends ArrayAdapter<District> {
         private final LayoutInflater mInflater;

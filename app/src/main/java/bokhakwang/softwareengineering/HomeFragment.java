@@ -141,6 +141,22 @@ public class HomeFragment extends Fragment {
 
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        Repository.getRepo(getContext()).fetchPostList(result -> {
+            if(result) {
+                mProgressBar.setVisibility(View.INVISIBLE);
+                mPostList = Repository.getRepo(getContext()).getPostList();
+                mHomeRecyclerAdapter.setPostList(mPostList);
+
+            } else {
+                Log.d("MYTAG", "HomeFragment에서... fetch 실패");
+            }
+        });
+
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -159,12 +175,17 @@ public class HomeFragment extends Fragment {
             startActivityForResult(intent, REQUEST_CODE_ADD);
         });
 
-        mPostList = (List<Post>) getArguments().getSerializable("postList");
+//        if(getArguments() != null) {
+//            mPostList = (List<Post>) getArguments().getSerializable("postList");
+//        }
+
+        mPostList = new ArrayList<>();
         mHomeRecyclerAdapter = new HomeRecyclerAdapter(mPostList);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.setAdapter(mHomeRecyclerAdapter);
 
         mProgressBar = v.findViewById(R.id.home_progressbar);
+        mProgressBar.setVisibility(View.VISIBLE);
 
 //        mRepository.fetchPostList(res -> {
 //            if(res) {
@@ -266,6 +287,15 @@ public class HomeFragment extends Fragment {
 //                }).create().show();
 //            });
 
+            holder.image.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getContext(),PictureActivity.class);
+                    intent.putExtra("picture", (Serializable) mPostList.get(i).getImages().get(0));
+                    startActivity(intent);
+                }
+            });
+
             holder.more_vert.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -323,8 +353,8 @@ public class HomeFragment extends Fragment {
                         }
                     });
 
-                    AlertDialog alert = builder.create();
-                    alert.show();
+                    builder.create().show();
+
                 }
             });
         }
@@ -335,7 +365,7 @@ public class HomeFragment extends Fragment {
             return mPostList.size();
         }
 
-        private void setPostList(List<Post> postList) {
+        public void setPostList(List<Post> postList) {
             mPostList = postList;
             notifyDataSetChanged();
         }

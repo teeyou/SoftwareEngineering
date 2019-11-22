@@ -42,13 +42,15 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
-                        tools:text="2019-09-22"/>
+                        android:gravity="center_horizontal"
+                        tools:text="작성일"/>
 
                     <TextView
                         android:id="@+id/list_item_location"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
+                        android:gravity="center_horizontal"
                         tools:text="지역"/>
 
                     <TextView
@@ -56,6 +58,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
+                        android:gravity="center_horizontal"
                         tools:text="작성자"/>
 
                     <TextView
@@ -63,6 +66,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:maxLines="3"
+                        android:gravity="center_horizontal"
                         tools:text="본문"/>
 
                 </LinearLayout>

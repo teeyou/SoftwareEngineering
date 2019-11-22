@@ -24,4 +24,11 @@
 
     <include layout="@layout/bottom_sheet"/>
 
+    <ProgressBar
+        android:id="@+id/map_progressbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="invisible" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
