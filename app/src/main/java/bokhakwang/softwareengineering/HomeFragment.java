@@ -55,6 +55,8 @@ public class HomeFragment extends Fragment {
 
     Repository mRepository;
 
+    private TextView mPostCount;
+
     private ProgressBar mProgressBar;
     private Toolbar mToolbar;
     private SearchView mSearchView;
@@ -112,14 +114,14 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static HomeFragment newInstance(List<Post> postList) {
-        HomeFragment fragment = new HomeFragment();
-        Bundle args = new Bundle();
-        args.putSerializable("postList", (Serializable) postList);
-        fragment.setArguments(args);
-
-        return fragment;
-    }
+//    public static HomeFragment newInstance(List<Post> postList) {
+//        HomeFragment fragment = new HomeFragment();
+//        Bundle args = new Bundle();
+//        args.putSerializable("postList", (Serializable) postList);
+//        fragment.setArguments(args);
+//
+//        return fragment;
+//    }
 
     @Override
     public void onAttach(Context context) {
@@ -150,7 +152,7 @@ public class HomeFragment extends Fragment {
                 mProgressBar.setVisibility(View.INVISIBLE);
                 mPostList = Repository.getRepo(getContext()).getPostList();
                 mHomeRecyclerAdapter.setPostList(mPostList);
-
+                mPostCount.setText("Posts : " + mPostList.size());
             } else {
                 Log.d("MYTAG", "HomeFragment에서... fetch 실패");
             }
@@ -169,15 +171,12 @@ public class HomeFragment extends Fragment {
         mSearchView = (SearchView) mToolbar.getMenu().findItem(R.id.menu_search).getActionView();
         mSearchView.setOnQueryTextListener(mOnQueryTextListener);
 
+        mPostCount = v.findViewById(R.id.post_count);
         mFab = v.findViewById(R.id.fab);
         mFab.setOnClickListener(__ -> {
             Intent intent = new Intent(getContext(), EditPostActivity.class);
             startActivityForResult(intent, REQUEST_CODE_ADD);
         });
-
-//        if(getArguments() != null) {
-//            mPostList = (List<Post>) getArguments().getSerializable("postList");
-//        }
 
         mPostList = new ArrayList<>();
         mHomeRecyclerAdapter = new HomeRecyclerAdapter(mPostList);
@@ -186,16 +185,6 @@ public class HomeFragment extends Fragment {
 
         mProgressBar = v.findViewById(R.id.home_progressbar);
         mProgressBar.setVisibility(View.VISIBLE);
-
-//        mRepository.fetchPostList(res -> {
-//            if(res) {
-//                mPostList = mRepository.getPostList();
-//                mHomeRecyclerAdapter.setPostList(mPostList);
-//                mProgressBar.setVisibility(View.GONE);
-//            } else {
-//                //Loading postList fail
-//            }
-//        });
 
         return v;
     }
@@ -217,6 +206,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    //Post Update시 DB를 거치지 않고 Local에서 PostList를 바로 update
     public void replacePost(Post post) {
         for (int i = 0; i < mPostList.size(); i++) {
             if (post.getId().equals(mPostList.get(i).getId())) {
@@ -249,43 +239,6 @@ public class HomeFragment extends Fragment {
             holder.location.setText(post.getDetail_location());
             holder.author.setText(post.getAuthor());
             holder.contents.setText(post.getContents());
-
-//            holder.itemView.setOnClickListener(__ -> {
-//                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-//                EditText password = new EditText(getContext());
-//                builder.setTitle("포스트 설정");
-//                builder.setMessage("비밀번호 입력 후 눌러주세요");
-//                builder.setView(password);
-//                builder.setPositiveButton("변경", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        if (password.getText().toString().equals(post.getPassword())) {
-//                            Intent intent = new Intent(getContext(), EditPostActivity.class);
-//                            intent.putExtra("post", post);
-//                            intent.setAction("update");
-//                            //startActivity(intent);
-//                            startActivityForResult(intent, REQUEST_CODE_UPDATE);
-//
-//                        } else {
-//                            Toast.makeText(getContext(), R.string.toast_wrong_password, Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                }).setNegativeButton("삭제", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        if (password.getText().toString().equals(post.getPassword())) {
-//                            Firestore.getInstance().deletePost(post, result -> {
-//                                if (result) {
-//                                    mPostList.remove(i);
-//                                    mHomeRecyclerAdapter.notifyDataSetChanged();
-//                                    Toast.makeText(getContext(), R.string.toast_post_deleted, Toast.LENGTH_SHORT).show();
-//                                }
-//                                FireStorage.getInstance().deleteImage(post.getImages().get(0));
-//                            });
-//                        } else {
-//                            Toast.makeText(getContext(), R.string.toast_wrong_password, Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                }).create().show();
-//            });
 
             holder.image.setOnClickListener(new View.OnClickListener() {
                 @Override

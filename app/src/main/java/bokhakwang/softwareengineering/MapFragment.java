@@ -88,7 +88,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         Log.d("MYTAG", "onCreate");
         super.onCreate(savedInstanceState);
         mDistrictSpinnerAdapter = new DistrictSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item);
-        mMapModel = MapModelFactory.createMapeModel();
+        mMapModel = MapModelFactory.createMapModel();
         mDistrictSpinnerAdapter.clear();
         mDistrictSpinnerAdapter.addAll(mMapModel.getDistrictList());
 

@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -77,7 +78,10 @@ public class EditPostFragment extends Fragment {
     private Spinner mDistrictSpinner;
     private ArrayAdapter<District> mDistrictSpinnerAdapter;
 
-    private String post_distrcit;
+    private Spinner mDetailSpinner;
+    private ArrayAdapter<District> mDetailSpinnerAdapter;
+
+    private String post_district;
     private String post_author;
     private String post_detail_location;
     private String post_contents;
@@ -86,9 +90,12 @@ public class EditPostFragment extends Fragment {
     private GeoPoint post_geoPoint;
     private ProgressBar mProgressBar;
 
+    private MapModel mMapModel;
     private LocationManager locationManager;
-
+    private boolean isFirst;
+    private boolean isFirst2;
     public static int REQUEST_CODE = 1000;
+
     private String flag;
     private String fireStorageUrl;
     private String post_id;
@@ -97,22 +104,22 @@ public class EditPostFragment extends Fragment {
     private LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-           Toast.makeText(getContext(),"onLocationChanged",Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), "onLocationChanged", Toast.LENGTH_SHORT);
         }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            Toast.makeText(getContext(),"onStatusChanged",Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), "onStatusChanged", Toast.LENGTH_SHORT);
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            Toast.makeText(getContext(),"onProviderEnabled",Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), "onProviderEnabled", Toast.LENGTH_SHORT);
         }
 
         @Override
         public void onProviderDisabled(String provider) {
-            Toast.makeText(getContext(),"onProviderDisabled",Toast.LENGTH_SHORT);
+            Toast.makeText(getContext(), "onProviderDisabled", Toast.LENGTH_SHORT);
         }
     };
 
@@ -171,10 +178,14 @@ public class EditPostFragment extends Fragment {
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
 
         mDistrictSpinnerAdapter = new MapFragment.DistrictSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item);
-        MapModel mMapModel = MapModelFactory.createMapeModel();
+        mMapModel = MapModelFactory.createMapModel();
 
         mDistrictSpinnerAdapter.clear();
         mDistrictSpinnerAdapter.addAll(mMapModel.getDistrictList());
+
+        mDetailSpinnerAdapter = new DetailSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item);
+        mDetailSpinnerAdapter.clear();
+        mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(0));
     }
 
     @Nullable
@@ -191,9 +202,14 @@ public class EditPostFragment extends Fragment {
         mSaveBtn = v.findViewById(R.id.edit_btn_save);
         mLoadImageFab = v.findViewById(R.id.edit_fab);
         mDistrictSpinner = v.findViewById(R.id.edit_spinner);
+        mDistrictSpinner.setAdapter(mDistrictSpinnerAdapter);
+
+        mDetailSpinner = v.findViewById(R.id.edit_spinner_detail);
+        mDetailSpinner.setAdapter(mDetailSpinnerAdapter);
+
         mProgressBar = v.findViewById(R.id.edit_progressbar);
 
-        if(getArguments() != null) {
+        if (getArguments() != null) {
             flag = "update";
             post = (Post) getArguments().getSerializable("post");
 
@@ -208,18 +224,48 @@ public class EditPostFragment extends Fragment {
 
         } else {
             flag = "add";
-            mDistrictSpinner.setSelection(0, false);
-            mDistrictSpinner.setAdapter(mDistrictSpinnerAdapter);
-            post_distrcit = mDistrictSpinnerAdapter.getItem(0).getName();
-            mLocation.setText(post_distrcit);
+//            mDistrictSpinner.setSelection(0, false);
+//            mDistrictSpinner.setAdapter(mDistrictSpinnerAdapter);
+            post_district = mDistrictSpinnerAdapter.getItem(0).getName();
+            String detail = mDetailSpinnerAdapter.getItem(0).getName();
+            mLocation.setText(post_district + " " + detail);
         }
+
+        isFirst = true;
 
         mDistrictSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                post_distrcit = mDistrictSpinnerAdapter.getItem(position).getName();
-                mLocation.setText(post_distrcit);
-                mDistrictSpinnerAdapter.notifyDataSetChanged();
+                Log.d("MYTAG", "onItemSelected");
+                if (!isFirst) {
+                    post_district = mDistrictSpinnerAdapter.getItem(position).getName();
+                    mLocation.setText(post_district);
+                    mDistrictSpinnerAdapter.notifyDataSetChanged();
+
+                    mDetailSpinnerAdapter.clear();
+                    mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(position));
+                    mDetailSpinnerAdapter.notifyDataSetChanged();
+                }
+
+                isFirst = false;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                Log.d("MYTAG", "onNothingSelected");
+            }
+        });
+
+        isFirst2 = true;
+        mDetailSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(!isFirst2) {
+                    String detail = mDetailSpinnerAdapter.getItem(position).getName();
+                    mLocation.setText(post_district + " " + detail);
+                }
+
+                isFirst2 = false;
             }
 
             @Override
@@ -227,7 +273,6 @@ public class EditPostFragment extends Fragment {
 
             }
         });
-
         mLoadImageFab.setOnClickListener(__ -> {
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -239,8 +284,8 @@ public class EditPostFragment extends Fragment {
             if (chkGpsService()) {
                 GeoPoint geoPoint = getCurrentLocation();
 
-                if(geoPoint == null) {
-                //if (geoPoint.getLatitude() == 0 && geoPoint.getLongitude() == 0) {
+                if (geoPoint == null) {
+                    //if (geoPoint.getLatitude() == 0 && geoPoint.getLongitude() == 0) {
                     Toast.makeText(getContext(), R.string.toast_fail_loading_address, Toast.LENGTH_SHORT).show();
 
                 } else {
@@ -266,7 +311,7 @@ public class EditPostFragment extends Fragment {
             if (flag.equals("add") && post_pictureUri == null || mAuthor.getText().toString().trim().equals("") || mLocation.getText().toString().trim().equals("") || mContents.getText().toString().equals("") || mPassword.getText().toString().trim().equals("")) {
                 Toast.makeText(getContext(), R.string.toast_fill_in_items, Toast.LENGTH_SHORT).show();
 
-            } else if(flag.equals("update") && mAuthor.getText().toString().trim().equals("") || mLocation.getText().toString().trim().equals("") || mContents.getText().toString().equals("") || mPassword.getText().toString().trim().equals("")) {
+            } else if (flag.equals("update") && mAuthor.getText().toString().trim().equals("") || mLocation.getText().toString().trim().equals("") || mContents.getText().toString().equals("") || mPassword.getText().toString().trim().equals("")) {
                 Toast.makeText(getContext(), R.string.toast_fill_in_items, Toast.LENGTH_SHORT).show();
 
             } else {
@@ -276,12 +321,13 @@ public class EditPostFragment extends Fragment {
                 post_contents = mContents.getText().toString().trim();
                 post_password = mPassword.getText().toString().trim();
 
-                if(flag.equals("add")) {
+                if (flag.equals("add")) {
+                    mProgressBar.setVisibility(View.VISIBLE);
                     Log.d("MYTAG", "add에서 저장버튼 누름");
-                    savePost(post_pictureUri, post_author, post_geoPoint, post_distrcit, post_detail_location, post_contents, post_password);
-                } else if(flag.equals("update")) {
+                    savePost(post_pictureUri, post_author, post_geoPoint, post_district, post_detail_location, post_contents, post_password);
+                } else if (flag.equals("update")) {
                     Log.d("MYTAG", "update에서 저장버튼 누름");
-                    updatePost(post, post_pictureUri, post_author, post_geoPoint, post_distrcit, post_detail_location, post_contents, post_password);
+                    updatePost(post, post_pictureUri, post_author, post_geoPoint, post_district, post_detail_location, post_contents, post_password);
                 }
 
             }
@@ -291,12 +337,12 @@ public class EditPostFragment extends Fragment {
     }
 
     public void updatePost(Post post, Uri pictureUri, String author, GeoPoint geoPoint, String distrcit, String detail_location, String contents, String password) {
-        mProgressBar.setVisibility(View.VISIBLE);
+        //mProgressBar.setVisibility(View.VISIBLE);
         Firestore firestore = Firestore.getInstance();
 
         List<Uri> uriList = new ArrayList<>();
 
-        if(pictureUri != null) { //사진 변경
+        if (pictureUri != null) { //사진 변경
             uriList.add(pictureUri);
             FireStorage.getInstance().deleteImage(post.getImages().get(0));
 
@@ -315,7 +361,7 @@ public class EditPostFragment extends Fragment {
 
 
                 firestore.updatePost(post, res -> {
-                    if(res) {
+                    if (res) {
                         mProgressBar.setVisibility(View.GONE);
                         Intent intent = new Intent();
                         intent.putExtra("updatePost", post);
@@ -337,8 +383,8 @@ public class EditPostFragment extends Fragment {
             post.setContents(contents);
             post.setPassword(password);
 
-            firestore.updatePost(post, res-> {
-                if(res) {
+            firestore.updatePost(post, res -> {
+                if (res) {
                     mProgressBar.setVisibility(View.GONE);
                     Intent intent = new Intent();
                     intent.putExtra("updatePost", post);
@@ -354,7 +400,7 @@ public class EditPostFragment extends Fragment {
     }
 
     public void savePost(Uri pictureUri, String author, GeoPoint geoPoint, String distrcit, String detail_location, String contents, String password) {
-        mProgressBar.setVisibility(View.VISIBLE);
+        //mProgressBar.setVisibility(View.VISIBLE);
         Firestore firestore = Firestore.getInstance();
 
         List<Uri> uriList = new ArrayList<>();
@@ -367,7 +413,7 @@ public class EditPostFragment extends Fragment {
 
             Post post = new Post(UUID.randomUUID().toString(), author, geoPoint, pictureList, time, distrcit, detail_location, contents, password);
             firestore.addNewPost(post, res -> {
-                if(res) {
+                if (res) {
                     mProgressBar.setVisibility(View.GONE);
 //                    Toast.makeText(getContext(), "Post was saved", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent();
@@ -384,14 +430,15 @@ public class EditPostFragment extends Fragment {
     public String getCurrentTime() {
         Calendar cal = Calendar.getInstance();
 
-        String dateToString , timeToString ;
+        String dateToString, timeToString;
 
         dateToString = String.format("%04d-%02d-%02d", cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH));
 
         timeToString = String.format("%02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
 
-        return dateToString +" " + timeToString;
+        return dateToString + " " + timeToString;
     }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -475,6 +522,37 @@ public class EditPostFragment extends Fragment {
 
         } else {
             return true;
+        }
+    }
+
+    public void changeAdapterList(int position) {
+        mDetailSpinnerAdapter.clear();
+        mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(position));
+        mDetailSpinnerAdapter.notifyDataSetChanged();
+    }
+
+    private class DetailSpinnerAdapter extends ArrayAdapter<District> {
+        private LayoutInflater mInflater;
+        private int mResource;
+
+        public DetailSpinnerAdapter(@NonNull Context context, int resource) {
+            super(context, resource);
+            mInflater = LayoutInflater.from(context);
+            mResource = resource;
+        }
+
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            final View view = mInflater.inflate(mResource, parent, false);
+            ((TextView) view).setText(getItem(position).getName());
+            return view;
+        }
+
+        @Override
+        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            final View view = mInflater.inflate(mResource, parent, false);
+            ((TextView) view).setText(getItem(position).getName());
+            return view;
         }
     }
 }
