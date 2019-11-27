@@ -21,6 +21,7 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
@@ -116,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MYTAG", "MainActivity에서 onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        String branchTest = "branch test";
+
 
         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);

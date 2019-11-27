@@ -2,6 +2,8 @@ package bokhakwang.softwareengineering;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -20,10 +22,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -32,6 +37,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.firestore.GeoPoint;
 
@@ -39,6 +45,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import bokhakwang.softwareengineering.data.source.Repository;
+import bokhakwang.softwareengineering.editpost.EditPostFragment;
 import bokhakwang.softwareengineering.model.District;
 import bokhakwang.softwareengineering.model.MapModel;
 import bokhakwang.softwareengineering.model.MapModelFactory;
@@ -63,6 +70,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private TextView mContents;
 
     private ProgressBar mProgressBar;
+
+    private FusedLocationProviderClient providerClient;
+    private GeoPoint myLocation = null;
+
     public static final CameraPosition SEOUL =
             new CameraPosition.Builder().target(new LatLng(37.5649533f, 126.9811368f))
                     .zoom(11)
@@ -126,11 +137,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mContents = v.findViewById(R.id.bottom_sheet_contents);
         mProgressBar = v.findViewById(R.id.map_progressbar);
 
+
+        providerClient = LocationServices.getFusedLocationProviderClient(getContext());
+
         mMapFragment.getMapAsync(this);
 
         mDistrictSpinner = v.findViewById(R.id.district_spinner);
         mDistrictSpinner.setAdapter(mDistrictSpinnerAdapter);
-        mDistrictSpinner.setSelection(0,false);
+        mDistrictSpinner.setSelection(0, false);
         mDistrictSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -153,28 +167,43 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         return v;
     }
 
+    private int checkSelfPermission(String accessFineLocation) {
+        Log.d("MYTAG", "checkPermission");
+        return 0;
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Log.d("MYTAG", "onMapReady");
-        GeoPoint currentLocation = getCurrentLocation();
-        CameraPosition position =
-                new CameraPosition.Builder().target(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()))
-                        .zoom(11)
-                        .bearing(0)
-                        .tilt(0)
-                        .build();
+
+        //GeoPoint currentLocation = getCurrentLocation();
+
+//        CameraPosition position =
+//                new CameraPosition.Builder().target(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()))
+//                        .zoom(11)
+//                        .bearing(0)
+//                        .tilt(0)
+//                        .build();
 
         mMap = googleMap;
-        //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(SEOUL));
-        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(SEOUL));
+        //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        mMap.setMyLocationEnabled(true);
+
+        moveCameraCurrentLocation();
 
         mProgressBar.setVisibility(View.VISIBLE);
         Repository.getRepo(getContext()).fetchPostList(result -> {
-            if(result) {
+            if (result) {
                 mProgressBar.setVisibility(View.INVISIBLE);
                 mPostList = Repository.getRepo(getContext()).getPostList();
 
-                for(Post post : mPostList) {
+                for (Post post : mPostList) {
                     MarkerOptions markerOptions = new MarkerOptions();
                     GeoPoint geoPoint = post.getLatLng();
                     LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
@@ -211,9 +240,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 LatLng latLng = marker.getPosition();
                 Post markerPost = null;
 
-                for(Post post : mPostList) {
+                for (Post post : mPostList) {
                     GeoPoint geoPoint = post.getLatLng();
-                    if(geoPoint.getLatitude() == latLng.latitude && geoPoint.getLongitude() == latLng.longitude) {
+                    if (geoPoint.getLatitude() == latLng.latitude && geoPoint.getLongitude() == latLng.longitude) {
                         markerPost = post;
                         break;
                     }
@@ -231,17 +260,82 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
-    private GeoPoint getCurrentLocation() {
+    public void moveCameraCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-            return geoPoint;
-        }
 
-        return null;
+            if(chkGpsService()) {
+                providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        myLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+                        CameraPosition position =
+                                new CameraPosition.Builder().target(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+                                        .zoom(11)
+                                        .bearing(0)
+                                        .tilt(0)
+                                        .build();
+                        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+                    }
+                });
+            }
+        }
     }
 
+    private boolean chkGpsService() {
+        String gps = android.provider.Settings.Secure.getString(getActivity().getContentResolver(), android.provider.Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+
+        if (!(gps.matches(".*gps.*") && gps.matches(".*network.*"))) {
+
+            // GPS OFF 일때 Dialog 표시
+            AlertDialog.Builder gsDialog = new AlertDialog.Builder(getContext());
+            gsDialog.setTitle(R.string.msg_gps_settings_title);
+            gsDialog.setMessage(R.string.msg_gps_settings_contents);
+            gsDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    // GPS설정 화면으로 이동
+                    Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+                    startActivity(intent);
+                }
+            }).setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    return;
+                }
+            }).create().show();
+            return false;
+
+        } else {
+            return true;
+        }
+    }
+
+//    private GeoPoint getCurrentLocation() {
+//
+//
+//        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//
+////            providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+////                @Override
+////                public void onSuccess(Location location) {
+////                    myLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
+////                    CameraPosition position =
+////                            new CameraPosition.Builder().target(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
+////                                    .zoom(11)
+////                                    .bearing(0)
+////                                    .tilt(0)
+////                                    .build();
+////                    mMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+////                }
+////            });
+//
+//            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+//            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//            GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+//            return geoPoint;
+//        }
+//
+//        return null;
+//    }
 
 
     public static class DistrictSpinnerAdapter extends ArrayAdapter<District> {
@@ -258,14 +352,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
             final View view = mInflater.inflate(mResource, parent, false);
-            ((TextView)view).setText(getItem(position).getName());
+            ((TextView) view).setText(getItem(position).getName());
             return view;
         }
 
         @Override
         public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
             final View view = mInflater.inflate(mResource, parent, false);
-            ((TextView)view).setText(getItem(position).getName());
+            ((TextView) view).setText(getItem(position).getName());
             return view;
         }
     }

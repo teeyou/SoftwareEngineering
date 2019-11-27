@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -27,6 +28,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -62,25 +64,27 @@ public class HomeFragment extends Fragment {
     private SearchView mSearchView;
     List<Post> mSearchPostList;
 
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+
     SearchView.OnQueryTextListener mOnQueryTextListener = new SearchView.OnQueryTextListener() {
         @Override
         public boolean onQueryTextSubmit(String query) {
-            mSearchPostList = new ArrayList<>();
-
-            for (Post post : mPostList) {
-                String time = post.getTime();
-                String location = post.getDetail_location();
-                String author = post.getAuthor();
-                String contents = post.getContents();
-
-                String str = time + " " + location + " " + author + " " + contents;
-
-                if (str.contains(query)) {
-                    mSearchPostList.add(post);
-                }
-            }
-
-            mHomeRecyclerAdapter.setPostList(mSearchPostList);
+//            mSearchPostList = new ArrayList<>();
+//
+//            for (Post post : mPostList) {
+//                String time = post.getTime();
+//                String location = post.getDetail_location();
+//                String author = post.getAuthor();
+//                String contents = post.getContents();
+//
+//                String str = time + " " + location + " " + author + " " + contents;
+//
+//                if (str.contains(query)) {
+//                    mSearchPostList.add(post);
+//                }
+//            }
+//
+//            mHomeRecyclerAdapter.setPostList(mSearchPostList);
             return true;
         }
 
@@ -90,6 +94,7 @@ public class HomeFragment extends Fragment {
 
             if (newText.equals("")) {
                 mHomeRecyclerAdapter.setPostList(mPostList);
+                mPostCount.setText("Posts : " + mPostList.size());
             } else {
                 for (Post post : mPostList) {
                     String time = post.getTime();
@@ -105,6 +110,7 @@ public class HomeFragment extends Fragment {
                 }
 
                 mHomeRecyclerAdapter.setPostList(mSearchPostList);
+                mPostCount.setText("Posts : " + mSearchPostList.size());
             }
             return true;
         }
@@ -186,6 +192,25 @@ public class HomeFragment extends Fragment {
         mProgressBar = v.findViewById(R.id.home_progressbar);
         mProgressBar.setVisibility(View.VISIBLE);
 
+        mSwipeRefreshLayout = v.findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Repository.getRepo(getContext()).fetchPostList(result -> {
+                    if(result) {
+                        mPostList = Repository.getRepo(getContext()).getPostList();
+                        mHomeRecyclerAdapter.setPostList(mPostList);
+                        mPostCount.setText("Posts : " + mPostList.size());
+                    } else {
+                        Log.d("MYTAG", "HomeFragment onRefresh에서... fetch 실패");
+                    }
+
+                    mSearchView.setQuery("",false);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                });
+            }
+        });
+
         return v;
     }
 
@@ -196,13 +221,13 @@ public class HomeFragment extends Fragment {
         if (requestCode == REQUEST_CODE_ADD && resultCode == getActivity().RESULT_OK) {
             mPostList.add(0, (Post) data.getSerializableExtra("addPost"));
             mHomeRecyclerAdapter.notifyDataSetChanged();
-            Toast.makeText(getContext(), "Post was saved", Toast.LENGTH_SHORT).show();
+            mPostCount.setText("Posts : " + mPostList.size());
+            Toast.makeText(getContext(), R.string.toast_post_saved, Toast.LENGTH_SHORT).show();
         } else if (requestCode == REQUEST_CODE_UPDATE && resultCode == getActivity().RESULT_OK) {
             Post post = (Post) data.getSerializableExtra("updatePost");
-
             replacePost(post);
             mHomeRecyclerAdapter.notifyDataSetChanged();
-            Toast.makeText(getContext(), "Post was updated", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.toast_post_updated, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -218,10 +243,10 @@ public class HomeFragment extends Fragment {
     }
 
     class HomeRecyclerAdapter extends RecyclerView.Adapter<HomeViewHolder> {
-        List<Post> mPostList;
+        List<Post> myPostList;
 
         private HomeRecyclerAdapter(List<Post> list) {
-            mPostList = list;
+            myPostList = list;
         }
 
         @NonNull
@@ -233,7 +258,7 @@ public class HomeFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull HomeViewHolder holder, int i) {
-            Post post = mPostList.get(i);
+            Post post = myPostList.get(i);
             Glide.with(getContext()).load(post.getImages().get(0)).into(holder.image);
             holder.time.setText(post.getTime());
             holder.location.setText(post.getDetail_location());
@@ -244,7 +269,7 @@ public class HomeFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(getContext(),PictureActivity.class);
-                    intent.putExtra("picture", (Serializable) mPostList.get(i).getImages().get(0));
+                    intent.putExtra("picture", (Serializable) myPostList.get(i).getImages().get(0));
                     startActivity(intent);
                 }
             });
@@ -291,7 +316,8 @@ public class HomeFragment extends Fragment {
                                         if (password.getText().toString().equals(post.getPassword())) {
                                             Firestore.getInstance().deletePost(post, result -> {
                                                 if (result) {
-                                                    mPostList.remove(i);
+                                                    myPostList.remove(i);
+                                                    mPostCount.setText("Posts : " + myPostList.size());
                                                     mHomeRecyclerAdapter.notifyDataSetChanged();
                                                     Toast.makeText(getContext(), R.string.toast_post_deleted, Toast.LENGTH_SHORT).show();
                                                 }
@@ -315,11 +341,11 @@ public class HomeFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return mPostList.size();
+            return myPostList.size();
         }
 
         public void setPostList(List<Post> postList) {
-            mPostList = postList;
+            myPostList = postList;
             notifyDataSetChanged();
         }
     }

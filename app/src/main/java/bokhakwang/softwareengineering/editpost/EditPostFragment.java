@@ -41,6 +41,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.GeoPoint;
@@ -101,6 +102,9 @@ public class EditPostFragment extends Fragment {
     private String post_id;
     private Post post;
 
+    private FusedLocationProviderClient providerClient;
+    private Location myLocation;
+
     private LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
@@ -136,10 +140,19 @@ public class EditPostFragment extends Fragment {
 
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d("MYTAG", "EditPostFragment에서... onStart");
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        startLocationUpdates();
+        //startLocationUpdates();
+        Log.d("MYTAG", "EditPostFragment에서... onResume");
+        getMyLocation();
     }
 
     private void startLocationUpdates() {
@@ -163,7 +176,8 @@ public class EditPostFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        stopLocationUpdates();
+        //stopLocationUpdates();
+        Log.d("MYTAG", "EditPostFragment에서... onPause");
     }
 
     private void stopLocationUpdates() {
@@ -186,6 +200,8 @@ public class EditPostFragment extends Fragment {
         mDetailSpinnerAdapter = new DetailSpinnerAdapter(getContext(), android.R.layout.simple_spinner_item);
         mDetailSpinnerAdapter.clear();
         mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(0));
+
+        providerClient = LocationServices.getFusedLocationProviderClient(getContext());
     }
 
     @Nullable
@@ -274,34 +290,59 @@ public class EditPostFragment extends Fragment {
             }
         });
         mLoadImageFab.setOnClickListener(__ -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("image/*");
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CODE);
+//            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+//            intent.addCategory(Intent.CATEGORY_OPENABLE);
+//            intent.setType("image/*");
+//            startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CODE);
+
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent. setDataAndType(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+            startActivityForResult(intent, REQUEST_CODE);
         });
 
         mAutoLocationBtn.setOnClickListener(__ -> {
             if (chkGpsService()) {
-                GeoPoint geoPoint = getCurrentLocation();
+                //GeoPoint geoPoint = getCurrentLocation();
 
-                if (geoPoint == null) {
+                if (myLocation == null) {
                     //if (geoPoint.getLatitude() == 0 && geoPoint.getLongitude() == 0) {
                     Toast.makeText(getContext(), R.string.toast_fail_loading_address, Toast.LENGTH_SHORT).show();
+                    getMyLocation(); //현재 위치 다시 가져오기
 
                 } else {
+                    GeoPoint geoPoint = new GeoPoint(myLocation.getLatitude(), myLocation.getLongitude());
                     List<Address> addressList = getAddress(geoPoint);
 
                     if (addressList.size() != 0) {
                         Address address = addressList.get(0);
-                        //Log.d("MYTAG", "getAddressLine : " + address.getAddressLine(0));
                         post_detail_location = address.getAddressLine(0);
                         mLocation.setText(post_detail_location);
 
                     } else {
                         //주소 불러오는데 실패
                         Toast.makeText(getContext(), R.string.toast_fail_loading_address, Toast.LENGTH_SHORT).show();
+                        Log.d("MYTAG", "mAutoLocationBtn에서 addressList.size() == 0");
                     }
                 }
+            } else {
+                // GPS OFF 일때 Dialog 표시
+                AlertDialog.Builder gsDialog = new AlertDialog.Builder(getContext());
+                gsDialog.setTitle(R.string.msg_gps_settings_title);
+                gsDialog.setMessage(R.string.msg_gps_settings_contents);
+                gsDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // GPS설정 화면으로 이동
+                        Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        intent.addCategory(Intent.CATEGORY_DEFAULT);
+                        startActivity(intent);
+                    }
+                }).setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        return;
+                    }
+                }).create().show();
+
+                Toast.makeText(getContext(), R.string.toast_turn_on_GPS, Toast.LENGTH_SHORT).show();
             }
 
         });
@@ -485,11 +526,39 @@ public class EditPostFragment extends Fragment {
         return new GeoPoint(mResult.get(0).getLatitude(), mResult.get(0).getLongitude());
     }
 
+    public void getMyLocation() {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            if(chkGpsService()) {
+                providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        myLocation = location;
+                        Log.d("MYTAG", "getMyLocation 현재위치가져옴");
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d("MYTAG", "getMyLocation Error");
+                        myLocation = null;
+                    }
+                });
+            }
+        }
+    }
     private GeoPoint getCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
+            providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+
+                }
+            });
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+
+
             return geoPoint;
 
         }
@@ -502,22 +571,22 @@ public class EditPostFragment extends Fragment {
 
         if (!(gps.matches(".*gps.*") && gps.matches(".*network.*"))) {
 
-            // GPS OFF 일때 Dialog 표시
-            AlertDialog.Builder gsDialog = new AlertDialog.Builder(getContext());
-            gsDialog.setTitle("위치 서비스 설정");
-            gsDialog.setMessage("위치 서비스 기능을 설정하시겠습니까?");
-            gsDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    // GPS설정 화면으로 이동
-                    Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    intent.addCategory(Intent.CATEGORY_DEFAULT);
-                    startActivity(intent);
-                }
-            }).setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    return;
-                }
-            }).create().show();
+//            // GPS OFF 일때 Dialog 표시
+//            AlertDialog.Builder gsDialog = new AlertDialog.Builder(getContext());
+//            gsDialog.setTitle(R.string.msg_gps_settings_title);
+//            gsDialog.setMessage(R.string.msg_gps_settings_contents);
+//            gsDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int which) {
+//                    // GPS설정 화면으로 이동
+//                    Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+//                    startActivity(intent);
+//                }
+//            }).setNegativeButton("NO", new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int which) {
+//                    return;
+//                }
+//            }).create().show();
             return false;
 
         } else {
@@ -525,11 +594,11 @@ public class EditPostFragment extends Fragment {
         }
     }
 
-    public void changeAdapterList(int position) {
-        mDetailSpinnerAdapter.clear();
-        mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(position));
-        mDetailSpinnerAdapter.notifyDataSetChanged();
-    }
+//    public void changeAdapterList(int position) {
+//        mDetailSpinnerAdapter.clear();
+//        mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(position));
+//        mDetailSpinnerAdapter.notifyDataSetChanged();
+//    }
 
     private class DetailSpinnerAdapter extends ArrayAdapter<District> {
         private LayoutInflater mInflater;
