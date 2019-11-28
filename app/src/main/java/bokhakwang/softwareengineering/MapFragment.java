@@ -52,7 +52,7 @@ import bokhakwang.softwareengineering.model.MapModelFactory;
 import bokhakwang.softwareengineering.model.Post;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
-    private static float COORDINATE_OFFSET = 0.0001f;
+    private static float COORDINATE_OFFSET = 0.0000001f;
     private Spinner mDistrictSpinner;
     private ArrayAdapter<District> mDistrictSpinnerAdapter;
     private SupportMapFragment mMapFragment;
@@ -203,11 +203,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 mProgressBar.setVisibility(View.INVISIBLE);
                 mPostList = Repository.getRepo(getContext()).getPostList();
 
+                for (int i = 0; i < mPostList.size(); i++) {
+                    GeoPoint geoPoint = mPostList.get(i).getLatLng();
+                    double lat = geoPoint.getLatitude() + COORDINATE_OFFSET;
+                    double lng = geoPoint.getLongitude() + COORDINATE_OFFSET;
+                    GeoPoint newGeoPoint = new GeoPoint(lat, lng);
+                    mPostList.get(i).setLatLng(newGeoPoint);
+
+                    COORDINATE_OFFSET += COORDINATE_OFFSET;
+                }
+
                 for (Post post : mPostList) {
                     MarkerOptions markerOptions = new MarkerOptions();
                     GeoPoint geoPoint = post.getLatLng();
                     LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
-                    COORDINATE_OFFSET += COORDINATE_OFFSET;
                     markerOptions.position(latLng)
                             .title(post.getAuthor())
                             .snippet(post.getContents());
