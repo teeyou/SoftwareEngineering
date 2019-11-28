@@ -48,7 +48,9 @@
             </EditText>
 
             <Button
+                android:layout_gravity="right"
                 android:id="@+id/edit_btn_auto_location"
+                android:layout_marginRight="15dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="현재 위치 불러오기"/>
@@ -69,30 +71,45 @@
             android:id="@+id/edit_contents"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:lines="3"
+            android:minLines="1"
+            android:maxLines="3"
             android:layout_margin="@dimen/text_margin"
-            android:hint="본문 입력"
-            android:inputType="text">
+            android:hint="본문 입력                                                                     "
+            android:inputType="textMultiLine">
 
         </EditText>
 
-        <EditText
-            android:id="@+id/edit_password"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/text_margin"
-            android:hint="비밀번호 입력 포스트 삭제 및 변경시 사용"
-            android:inputType="textPassword">
-
-        </EditText>
-
-        <Button
-            android:id="@+id/edit_btn_save"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_marginRight="16dp"
-            android:background="#75EBFA"
-            android:text="확인"/>
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/edit_password"
+                android:layout_weight="3"
+                android:layout_gravity="end"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLength="8"
+                android:layout_marginLeft="160dp"
+                android:hint="비밀번호"
+                android:inputType="textPassword">
+
+            </EditText>
+
+            <Button
+                android:id="@+id/edit_btn_save"
+                android:layout_weight="2"
+                android:layout_gravity="end"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="15dp"
+                android:textColor="@color/White"
+                android:textSize="20dp"
+                android:background="@color/colorPrimaryLight"
+                android:text="확인"/>
+        </LinearLayout>
     </LinearLayout>
 
 

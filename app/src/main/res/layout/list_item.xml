@@ -37,46 +37,84 @@
                     android:layout_weight="9"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/list_item_time"
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:gravity="center_horizontal"
-                        tools:text="작성일"/>
+                        android:layout_height="match_parent"
+                        android:layout_weight="18"
+                        android:background="@color/colorPrimaryDark"
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/list_item_location"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:gravity="center_horizontal"
-                        tools:text="지역"/>
+                        <TextView
+                            android:id="@+id/list_item_time"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:gravity="left"
+                            android:layout_weight="4"
+                            android:textSize = "12dp"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginLeft="10dp"
+                            android:textColor="@color/White"
+                            tools:text="작성일"/>
 
-                    <TextView
-                        android:id="@+id/list_item_author"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:gravity="center_horizontal"
-                        tools:text="작성자"/>
+                        <TextView
+                            android:id="@+id/list_item_location"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:gravity="left"
+                            android:layout_weight="3"
+                            android:textSize = "12dp"
+                            android:layout_marginTop="4dp"
+                            android:textColor="@color/White"
+                            tools:text="지역"/>
 
-                    <TextView
-                        android:id="@+id/list_item_contents"
+
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:background="@color/colorPrimaryLLight"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:maxLines="3"
-                        android:gravity="center_horizontal"
-                        tools:text="본문"/>
+                        android:layout_height="match_parent"
+                        android:layout_weight="9"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/list_item_author"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/colorPrimary"
+                            android:maxLines="1"
+                            android:gravity="center_vertical"
+                            android:textStyle="bold"
+                            android:textColor="@color/White"
+                            android:paddingLeft="10dp"
+                            android:layout_weight="9"
+                            tools:text="작성자"/>
+
+                        <TextView
+                            android:id="@+id/list_item_contents"
+                            android:background="@color/colorPrimaryLLight"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxLines="3"
+                            android:gravity="center_horizontal"
+                            android:textColor="@color/White"
+                            android:layout_weight="3"
+                            tools:text="본문"/>
+
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
                 <LinearLayout
+                    android:background="@color/colorPrimaryLight"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center">
-
                     <ImageView
                         android:id="@+id/list_btn_more"
                         android:layout_width="wrap_content"

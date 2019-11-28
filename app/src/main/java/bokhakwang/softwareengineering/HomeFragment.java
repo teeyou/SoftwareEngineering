@@ -69,22 +69,7 @@ public class HomeFragment extends Fragment {
     SearchView.OnQueryTextListener mOnQueryTextListener = new SearchView.OnQueryTextListener() {
         @Override
         public boolean onQueryTextSubmit(String query) {
-//            mSearchPostList = new ArrayList<>();
-//
-//            for (Post post : mPostList) {
-//                String time = post.getTime();
-//                String location = post.getDetail_location();
-//                String author = post.getAuthor();
-//                String contents = post.getContents();
-//
-//                String str = time + " " + location + " " + author + " " + contents;
-//
-//                if (str.contains(query)) {
-//                    mSearchPostList.add(post);
-//                }
-//            }
-//
-//            mHomeRecyclerAdapter.setPostList(mSearchPostList);
+
             return true;
         }
 
