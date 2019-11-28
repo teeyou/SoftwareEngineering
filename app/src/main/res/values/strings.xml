@@ -2,6 +2,7 @@
     <string name="app_name">SoftwareEngineering</string>
 
     <string name="google_maps_key">AIzaSyC8ePJxpRY9EoDsGj_wIdFeRGruJBPYs1s</string>
+    <!--<string name="google_maps_key">AIzaSyAabVL9HbAqkV_hFWiJuWsXLvGc72f4Vns</string>-->
 
     <string name="title_home">Home</string>
     <string name="title_map">Map</string>

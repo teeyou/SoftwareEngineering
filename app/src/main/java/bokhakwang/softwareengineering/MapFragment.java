@@ -52,7 +52,7 @@ import bokhakwang.softwareengineering.model.MapModelFactory;
 import bokhakwang.softwareengineering.model.Post;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
-    private static float COORDINATE_OFFSET = 0.0000001f;
+    private static float COORDINATE_OFFSET;
     private Spinner mDistrictSpinner;
     private ArrayAdapter<District> mDistrictSpinnerAdapter;
     private SupportMapFragment mMapFragment;
@@ -140,6 +140,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         providerClient = LocationServices.getFusedLocationProviderClient(getContext());
 
+        COORDINATE_OFFSET = 0.00000001f;
         mMapFragment.getMapAsync(this);
 
         mDistrictSpinner = v.findViewById(R.id.district_spinner);
@@ -207,6 +208,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     GeoPoint geoPoint = mPostList.get(i).getLatLng();
                     double lat = geoPoint.getLatitude() + COORDINATE_OFFSET;
                     double lng = geoPoint.getLongitude() + COORDINATE_OFFSET;
+
                     GeoPoint newGeoPoint = new GeoPoint(lat, lng);
                     mPostList.get(i).setLatLng(newGeoPoint);
 

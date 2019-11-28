@@ -322,6 +322,7 @@ public class EditPostFragment extends Fragment {
                         //주소 불러오는데 실패
                         Toast.makeText(getContext(), R.string.toast_fail_loading_address, Toast.LENGTH_SHORT).show();
                         Log.d("MYTAG", "mAutoLocationBtn에서 addressList.size() == 0");
+                        Log.d("MYTAG","mAutoLocationBtn에서 myLocation : " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
                     }
                 }
             } else {
@@ -503,13 +504,11 @@ public class EditPostFragment extends Fragment {
     private List<Address> getAddress(GeoPoint geoPoint) {
         Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
         List<Address> addressList = null;
-
         try {
             addressList = geocoder.getFromLocation(geoPoint.getLatitude(), geoPoint.getLongitude(), 1);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return addressList;
     }
 

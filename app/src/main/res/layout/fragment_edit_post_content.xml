@@ -76,7 +76,7 @@
             android:maxLines="3"
             android:layout_margin="@dimen/text_margin"
             android:hint="본문 입력                                                                     "
-            android:inputType="textMultiLine">
+            android:inputType="text">
 
         </EditText>
 
