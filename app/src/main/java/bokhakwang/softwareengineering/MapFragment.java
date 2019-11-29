@@ -42,7 +42,9 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import bokhakwang.softwareengineering.data.source.Repository;
 import bokhakwang.softwareengineering.editpost.EditPostFragment;
@@ -73,6 +75,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private FusedLocationProviderClient providerClient;
     private GeoPoint myLocation = null;
+
+    private Map<String, Object> myMap;
 
     public static final CameraPosition SEOUL =
             new CameraPosition.Builder().target(new LatLng(37.5649533f, 126.9811368f))
@@ -105,6 +109,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         //mPostList = (List<Post>) getArguments().getSerializable("postList");
 
+        myMap = new HashMap<>();
 
     }
 
@@ -140,7 +145,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         providerClient = LocationServices.getFusedLocationProviderClient(getContext());
 
-        COORDINATE_OFFSET = 0.00000001f;
+        COORDINATE_OFFSET = 0.00001f;
         mMapFragment.getMapAsync(this);
 
         mDistrictSpinner = v.findViewById(R.id.district_spinner);
@@ -206,13 +211,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
                 for (int i = 0; i < mPostList.size(); i++) {
                     GeoPoint geoPoint = mPostList.get(i).getLatLng();
-                    double lat = geoPoint.getLatitude() + COORDINATE_OFFSET;
-                    double lng = geoPoint.getLongitude() + COORDINATE_OFFSET;
+
+                    double lat = geoPoint.getLatitude();
+                    double lng = geoPoint.getLongitude();
+
+                    if (myMap.get(geoPoint.toString()) == null) {
+                        myMap.put(geoPoint.toString(), "true");
+                        //최초 위치 일 때
+                    } else {
+                        //같은 위치 존재할 때
+                        lat += COORDINATE_OFFSET;
+                        lng += COORDINATE_OFFSET;
+                        COORDINATE_OFFSET += COORDINATE_OFFSET;
+                    }
+
 
                     GeoPoint newGeoPoint = new GeoPoint(lat, lng);
                     mPostList.get(i).setLatLng(newGeoPoint);
 
-                    COORDINATE_OFFSET += COORDINATE_OFFSET;
                 }
 
                 for (Post post : mPostList) {
@@ -274,7 +290,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void moveCameraCurrentLocation() {
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-            if(chkGpsService()) {
+            if (chkGpsService()) {
                 providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
@@ -298,21 +314,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         if (!(gps.matches(".*gps.*") && gps.matches(".*network.*"))) {
 
             // GPS OFF 일때 Dialog 표시
-            AlertDialog.Builder gsDialog = new AlertDialog.Builder(getContext());
-            gsDialog.setTitle(R.string.msg_gps_settings_title);
-            gsDialog.setMessage(R.string.msg_gps_settings_contents);
-            gsDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    // GPS설정 화면으로 이동
-                    Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    intent.addCategory(Intent.CATEGORY_DEFAULT);
-                    startActivity(intent);
-                }
-            }).setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    return;
-                }
-            }).create().show();
+//            AlertDialog.Builder gsDialog = new AlertDialog.Builder(getContext());
+//            gsDialog.setTitle(R.string.msg_gps_settings_title);
+//            gsDialog.setMessage(R.string.msg_gps_settings_contents);
+//            gsDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int which) {
+//                    // GPS설정 화면으로 이동
+//                    Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+//                    startActivity(intent);
+//                }
+//            }).setNegativeButton("NO", new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int which) {
+//                    return;
+//                }
+//            }).create().show();
             return false;
 
         } else {
