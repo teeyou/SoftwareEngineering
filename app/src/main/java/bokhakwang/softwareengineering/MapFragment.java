@@ -113,17 +113,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     }
 
-//    private void fetchPosts() {
-//        Repository.getRepo(getContext()).fetchPostList(res -> {
-//            if(res) {
-//                mPostList = Repository.getRepo(getContext()).getPostList();
-//                mMapFragment.getMapAsync(this);
-//            } else {
-//
-//            }
-//        });
-//    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -247,19 +236,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
-//        if(mPostList != null) {
-//            for(Post post : mPostList) {
-//                MarkerOptions markerOptions = new MarkerOptions();
-//                GeoPoint geoPoint = post.getLatLng();
-//                LatLng latLng = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
-//                COORDINATE_OFFSET += COORDINATE_OFFSET;
-//                markerOptions.position(latLng)
-//                        .title(post.getAuthor())
-//                        .snippet(post.getContents());
-//
-//                mMap.addMarker(markerOptions);
-//            }
-//        }
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override

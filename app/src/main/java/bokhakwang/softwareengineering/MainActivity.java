@@ -104,12 +104,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         Log.d("MYTAG", "MainActivity에서 onStart");
 
-//        mRepository.fetchPostList(res -> {
-//            if (res) {
-//                mProgressBar.setVisibility(View.INVISIBLE);
-//                mPostList = mRepository.getPostList();
-//            }
-//        });
     }
 
     @Override
@@ -118,10 +112,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        String branchTest = "branch test";
-
-
         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
         }
@@ -129,12 +119,6 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar = findViewById(R.id.progressbar);
         mHomeLayout = findViewById(R.id.fragment_home);
         mMapLayout = findViewById(R.id.fragment_map);
-
-        //mRepository = Repository.getRepo(getApplicationContext());
-        //mPostList = new ArrayList<>();
-
-        //mProgressBar.setVisibility(View.VISIBLE);
-
 
         mCurrVisibleLayout = mHomeLayout;
 
@@ -146,25 +130,6 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-//        mRepository.fetchPostList(res -> {
-//            if(res) {
-//                mProgressBar.setVisibility(View.INVISIBLE);
-//                mPostList = mRepository.getPostList();
-//
-//                mHomeLayout = findViewById(R.id.fragment_home);
-//                mMapLayout = findViewById(R.id.fragment_map);
-//
-//                mCurrVisibleLayout = mHomeLayout;
-//
-//                mHomeFragment = HomeFragment.newInstance(mPostList);
-//                mMapFragment = MapFragment.newInstance(mPostList);
-//
-//                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_home, mHomeFragment).commit();
-//
-//                BottomNavigationView navigation = findViewById(R.id.navigation);
-//                navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-//            }
-//        });
 
     }
 }

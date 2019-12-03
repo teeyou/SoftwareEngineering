@@ -437,8 +437,6 @@ public class EditPostFragment extends Fragment {
                 }
             });
         }
-
-
     }
 
     public void savePost(Uri pictureUri, String author, GeoPoint geoPoint, String distrcit, String detail_location, String contents, String password) {
@@ -545,25 +543,25 @@ public class EditPostFragment extends Fragment {
             }
         }
     }
-    private GeoPoint getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-
-                }
-            });
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-
-
-            return geoPoint;
-
-        }
-
-        return null;
-    }
+//    private GeoPoint getCurrentLocation() {
+//        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//
+//            providerClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+//                @Override
+//                public void onSuccess(Location location) {
+//
+//                }
+//            });
+//            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//            GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+//
+//
+//            return geoPoint;
+//
+//        }
+//
+//        return null;
+//    }
 
     private boolean chkGpsService() {
         String gps = android.provider.Settings.Secure.getString(getActivity().getContentResolver(), android.provider.Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
@@ -592,12 +590,6 @@ public class EditPostFragment extends Fragment {
             return true;
         }
     }
-
-//    public void changeAdapterList(int position) {
-//        mDetailSpinnerAdapter.clear();
-//        mDetailSpinnerAdapter.addAll(mMapModel.getDistrictDetailList().get(position));
-//        mDetailSpinnerAdapter.notifyDataSetChanged();
-//    }
 
     private class DetailSpinnerAdapter extends ArrayAdapter<District> {
         private LayoutInflater mInflater;

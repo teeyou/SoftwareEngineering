@@ -105,14 +105,6 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
-//    public static HomeFragment newInstance(List<Post> postList) {
-//        HomeFragment fragment = new HomeFragment();
-//        Bundle args = new Bundle();
-//        args.putSerializable("postList", (Serializable) postList);
-//        fragment.setArguments(args);
-//
-//        return fragment;
-//    }
 
     @Override
     public void onAttach(Context context) {
